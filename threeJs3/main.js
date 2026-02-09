@@ -102,7 +102,7 @@ scene.background = cubeTextureLoader.load([ // 6 odal mert a kockának 6 oldal v
     stars
 
 ])
-
+/* 
 //kocka aminek hasonlóan töljük fel a texturáját mint backgroundnak!!:
 const box2Geometry = new THREE.BoxGeometry(4,4,4)
 const box2Material = new THREE.MeshBasicMaterial({
@@ -110,8 +110,20 @@ const box2Material = new THREE.MeshBasicMaterial({
 })
 const box2 = new THREE.Mesh(box2Geometry,box2Material)
 scene.add(box2)
+*/
 
-
+/* ugyan ez mint itt csak minden oldalnak külön képet adunk texturnának!*/
+const box2Geometry = new THREE.BoxGeometry(4,4,4)
+const box2MultiMaterial = [
+    new THREE.MeshBasicMaterial({map: texturaloader.load(stars)}),
+    new THREE.MeshBasicMaterial({map: texturaloader.load(nebula)}),
+    new THREE.MeshBasicMaterial({map: texturaloader.load(stars)}),
+    new THREE.MeshBasicMaterial({map: texturaloader.load(nebula)}),
+    new THREE.MeshBasicMaterial({map: texturaloader.load(stars)}),
+    new THREE.MeshBasicMaterial({map: texturaloader.load(nebula)})
+]
+const box2 = new THREE.Mesh(box2Geometry,box2MultiMaterial)
+scene.add(box2)
 //gui dolog:
 const gui = new dat.GUI()
 
@@ -168,6 +180,23 @@ const gridHelper = new THREE.GridHelper(30,100)
 scene.add(gridHelper)
 
 
+//egére lekövetés:
+const mousePosition = new THREE.Vector2()
+window.addEventListener("mousemove",function(e){
+    mousePosition.x = (e.clientX / window.innerWidth) *2 -1;
+    mousePosition.y =n (e.clientY / window.innerHeight) *2 +1;
+})
+const raycaster = new THREE.Raycaster()
+
+//3d object id gyűjtés:
+const SphereId = sphere.id
+
+//box name adás a hover effect-hez
+box2.name = "theBox";
+
+
+
+
 function animate(time) {
     box.rotation.x = time/1000;
     box.rotation.y = time/1000;
@@ -179,6 +208,20 @@ function animate(time) {
     spotLight.penumbra = option.penumbra;
     spotLight.angle = option.angle;
     sLightHelper.update() //mert mindig változik a nézet és igazodini kell hozzá a ligth helpernek is!!
+
+
+    //mouse szar vmi:
+    raycaster.setFromCamera(mousePosition,camera) //raycaster gyűjti az adatokat(camera = camera pozícióját is gyűjti)
+    const intersects = raycaster.intersectObject(scene.children)
+    for(let i = 0;i < intersects.length;i++) {
+        if (intersects[i].object.id === sphere.id)
+            intersects[i].object.material.color.set(0xFF0000)
+        //hover effect => rotate:
+        if(intersects[i].object.name === "theBox") {
+            intersects[i].object.rotation.x = time/1000;
+            intersects[i].object.rotation.y = time/1000;
+        }
+    }
 
     requestAnimationFrame(animate)
     renderer.render(scene,camera)

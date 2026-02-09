@@ -4,6 +4,11 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { ThreeMFLoader, Wireframe } from "three/examples/jsm/Addons.js";
 
+
+//háttér importálása:
+
+import nebula from "../src/img/background.png" //import utáni név az egy változó amit brmikor meg lehet hívni a kódba!
+import stars from "../src/img/stars.jpeg"
 //árnyékok enegedéjezése:
 renderer.shadowMap.enabled = true;
 
@@ -80,11 +85,50 @@ directionLight.position.set(-30,50,0)
 directionLight.castShadow = true
 directionLight.shadow.camera.bottom = -12
 
+*/
+
+//háttér betöltése és változó létrehozása:
+const texturaloader = new THREE.TextureLoader()
+//scene.background =  texturaloader.load(stars) //texturreloader változóba betöltöjük a hátteret!!
+//3d hátásu háttér mert a háttér is csak egy kocka valójába:
+
+const cubeTextureLoader = new THREE.CubeTextureLoader()
+scene.background = cubeTextureLoader.load([ // 6 odal mert a kockának 6 oldal van xd
+    nebula,
+    nebula,
+    stars,
+    stars,
+    stars,
+    stars
+
+])
+
+//kocka aminek hasonlóan töljük fel a texturáját mint backgroundnak!!:
+const box2Geometry = new THREE.BoxGeometry(4,4,4)
+const box2Material = new THREE.MeshBasicMaterial({
+    map: texturaloader.load(nebula) 
+})
+const box2 = new THREE.Mesh(box2Geometry,box2Material)
+scene.add(box2)
+
 
 //gui dolog:
 const gui = new dat.GUI()
-*/
 
+const spotLight = new THREE.SpotLight(0xFFFFFF)
+scene.add(spotLight)
+spotLight.position.set(-100,100,0)
+const sLightHelper = new THREE.SpotLightHelper(spotLight)
+scene.add(sLightHelper)
+spotLight.castShadow = true
+spotLight.angle = 0.2;
+
+
+//minnél messzebb van valami annál homályosabb lesz:
+//scene.fog = new THREE.Fog(0xFFFFFF,0,200) //0,200 => hogy meddig látszdójon vmi
+
+//arányosított:
+scene.fog = new THREE.FogExp2(0xFFFFFF,0.01)
 
 
 
@@ -97,7 +141,10 @@ let step = 0;
 const option = {
     sphereColor: "#ffea00",
     wireframe: false,
-    speed: 0.01
+    speed: 0.01,
+    angle: 0.2,
+    penumbra: 0,
+    intensity: 1
 }
 gui.addColor(option,"sphereColor").onChange(function(e){
     sphere.material.color.set(e) //az "e" tárolja a szín pontos típusát
@@ -107,6 +154,10 @@ gui.add(option,"wireframe").onChange(function(e) {
     sphere.material.wireframe = e;e
 })
 gui.add(option,"speed",0,0.1)
+
+gui.add(option,"angle",0,1)
+gui.add(option,"penumbra",0,1)
+gui.add(option,"intesity",0,1)
 
 
 
@@ -123,6 +174,11 @@ function animate(time) {
     //föl le mozog
     step += option.speed;
     sphere.position.y = 10* Math.abs(Math.sin(step)) //hogyan és milyen tengelyen mozógjon
+
+    spotLight.angle = option.angle;
+    spotLight.penumbra = option.penumbra;
+    spotLight.angle = option.angle;
+    sLightHelper.update() //mert mindig változik a nézet és igazodini kell hozzá a ligth helpernek is!!
 
     requestAnimationFrame(animate)
     renderer.render(scene,camera)
